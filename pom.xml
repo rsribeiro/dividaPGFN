@@ -16,6 +16,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>11</maven.compiler.release>
 		<graalvm.version>20.2.0</graalvm.version>
+		<jansi.version>2.2.0</jansi.version>
 	</properties>
 
 	<dependencies>
@@ -28,6 +29,11 @@
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
 			<version>4.5.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.fusesource.jansi</groupId>
+			<artifactId>jansi</artifactId>
+			<version>${jansi.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.graalvm.sdk</groupId>

@@ -35,7 +35,7 @@ final class BasePGFN implements Callable<Integer> {
 
 		Files.deleteIfExists(baseConsolidada);
 
-		System.out.println("Criando base em " + baseConsolidada.toAbsolutePath());
+		Common.mensagemProgresso("Criando base em " + baseConsolidada.toAbsolutePath());
 
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + baseConsolidada.toAbsolutePath());) {
 			Common.executeUpdateStatement(conn, "CREATE TABLE pgfn_devedores " +

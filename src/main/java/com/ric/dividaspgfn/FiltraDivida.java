@@ -48,20 +48,20 @@ final class FiltraDivida implements Callable<Integer> {
 			Files.createDirectory(dirSaida);
 		}
 
-		System.out.println("Criando arquivos de análise em " + dirSaida.toAbsolutePath());
+		Common.mensagemProgresso("Criando arquivos de análise em " + dirSaida.toAbsolutePath());
 
 		if (Files.notExists(basePGFN)) {
-			System.out.println("Erro: arquivo " + basePGFN.toAbsolutePath() + " não encontrado.");
+			Common.mensagemErro("Erro: arquivo " + basePGFN.toAbsolutePath() + " não encontrado.");
 			return 1;
 		}
 
 		if (Files.notExists(this.baseCNPJ)) {
-			System.out.println("Erro: arquivo " + this.baseCNPJ.toAbsolutePath() + " não encontrado.");
+			Common.mensagemErro("Erro: arquivo " + this.baseCNPJ.toAbsolutePath() + " não encontrado.");
 			return 1;
 		}
 
 		if (Files.notExists(this.arqConsulta)) {
-			System.out.println("Erro: arquivo " + this.arqConsulta.toAbsolutePath() + " não encontrado.");
+			Common.mensagemErro("Erro: arquivo " + this.arqConsulta.toAbsolutePath() + " não encontrado.");
 			return 1;
 		}
 

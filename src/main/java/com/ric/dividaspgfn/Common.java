@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.fusesource.jansi.Ansi;
+
 final class Common {
 	static final Charset CHARSET = StandardCharsets.ISO_8859_1;
 
@@ -15,5 +17,13 @@ final class Common {
 		try (Statement stmt = connection.createStatement();) {
 			return stmt.executeUpdate(statement);
 		}
+	}
+	
+	public static void mensagemErro(String mensagem) {
+		System.out.println(Ansi.ansi().fgBright(Ansi.Color.RED).a(mensagem).reset());
+	}
+	
+	public static void mensagemProgresso(String mensagem) {
+		System.out.println(Ansi.ansi().fgBright(Ansi.Color.GREEN).a(mensagem).reset());
 	}
 }
