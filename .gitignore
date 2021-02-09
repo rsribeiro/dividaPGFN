@@ -1,2 +1,8 @@
 #maven build
 /target
+
+#eclipse
+/bin
+/.settings
+.classpath
+.project
