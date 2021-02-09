@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -16,6 +16,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>11</maven.compiler.release>
 		<graalvm.version>20.2.0</graalvm.version>
+		<sqlite.version>3.34.0</sqlite.version>
+		<picocli.version>4.6.1</picocli.version>
 		<jansi.version>2.2.0</jansi.version>
 	</properties>
 
@@ -23,12 +25,12 @@
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.32.3.2</version>
+			<version>${sqlite.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>4.5.1</version>
+			<version>${picocli.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.fusesource.jansi</groupId>
@@ -55,7 +57,7 @@
 						<path>
 							<groupId>info.picocli</groupId>
 							<artifactId>picocli-codegen</artifactId>
-							<version>4.5.1</version>
+							<version>${picocli.version}</version>
 						</path>
 					</annotationProcessorPaths>
 					<compilerArgs>
