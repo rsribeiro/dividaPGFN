@@ -280,7 +280,7 @@ final class FiltraDivida implements Callable<Integer> {
 						"s.cod_qualificacao_representante_legal " +
 						"from cnpj_dados_socios_pj s " +
 						"left outer join cnpj_dados_cadastrais_pj p on s.cnpj = p.cnpj " +
-						"left outer join tab_qualificacao_responsavel_socio qs on s.cod_qualificacao_socio = substr('00'||qs.cod_qualificacao_responsavel_socio, -2, 2) " +
+						"left outer join tab_qualificacao_responsavel_socio qs on s.cod_qualificacao_socio = qs.cod_qualificacao_responsavel_socio " +
 						"where substr(s.cnpj,1,8) in (select cnpj_matriz from temp.divida) " +
 						"order by s.cnpj, s.identificador_socio");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
