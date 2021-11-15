@@ -30,12 +30,11 @@ Gera uma base consolidada SQLite a partir dos arquivos disponilizados pela PGFN.
 
 `DividaPGFN filtro -d=<diretório base> -b=<base CNPJ> -c=<consulta SQL de filtro>`
 
-Com o uso da [base auxiliar do CNPJ](https://bit.ly/3hZOPnh) disponibilizada pelo projeto [qsacnpj](https://github.com/georgevbsantiago/qsacnpj), exporta arquivos extraídos da base da dívida, para análises posteriores. Os registros que serão filtrados no banco de dados dependem de consulta SQL definida pelo usuário, que é realizada na base auxiliar do CNPJ.
+Com o uso da base auxiliar do CNPJ disponibilizada pelo projeto [cnpj-sqlite](https://github.com/rictom/cnpj-sqlite), exporta arquivos extraídos da base da dívida, para análises posteriores. Os registros que serão filtrados no banco de dados dependem de consulta SQL definida pelo usuário, que é realizada na base auxiliar do CNPJ.
 
 * saida\divida.csv: Registros desagregados da dívida como dispobilizados pela PGFN;
 * saida\corresponsaveis.csv: Dados complementares de corresponsáveis pelas dívidas que foram extraídas da base;
 * saida\cnpj.csv: Extração da base do CNPJ com os estabelecimentos extraídos;
-* saida\cnae_secundaria.csv: Dados complementares de CNAE secundária dos estabelecimentos presentes no arquivo de CNPJs;
 * saida\socios.csv: Sócios das empresas constantes no arquivo de CNPJs.
 
 ### Metodologia

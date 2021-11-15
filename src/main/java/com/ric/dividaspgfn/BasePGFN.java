@@ -17,7 +17,6 @@ import picocli.CommandLine.Option;
 
 @Command(name = "base_pgfn", aliases = "base", description = "Cria base em formato SQLite a partir dos arquivos disponibilizados pela PGFN")
 final class BasePGFN implements Callable<Integer> {
-
 	@Option(names = { "-d", "--dir" }, required = true, description = "Diretório base")
 	private Path dirBase;
 
@@ -93,6 +92,8 @@ final class BasePGFN implements Callable<Integer> {
 			Common.executeUpdateStatement(conn, "CREATE INDEX `index_cpf_cnpj` ON `pgfn_devedores` (`cpf_cnpj`)");
 			System.out.println("Índice criado.");
 		}
+
+		Common.mensagemProgresso("Execução finalizada com sucesso.");
 
 		return 0;
 	}
@@ -195,23 +196,23 @@ final class BasePGFN implements Callable<Integer> {
 
 		public void appendLinha(LinhaPGFN linha) {
 			try {
-				this.stmt.setString(1, linha.getCpfCnpj().replace(".", "").replace("/", "").replace("-", "").strip());
-				this.stmt.setString(2, linha.getTipoPessoa().strip());
-				this.stmt.setString(3, linha.getTipoDevedor().strip());
-				this.stmt.setString(4, linha.getNomeDevedor().strip());
-				this.stmt.setString(5, linha.getUfUnidadeResponsavel().strip());
-				this.stmt.setString(6, linha.getUnidadeResponsavel().strip());
-				this.stmt.setString(7, linha.getEntidadeResponsavel().strip());
-				this.stmt.setString(8, linha.getUnidadeInscricao().strip());
-				this.stmt.setString(9, linha.getNumeroInscricao().strip());
-				this.stmt.setString(10, linha.getTipoSituacaoInscricao().strip());
-				this.stmt.setString(11, linha.getSituacaoInscricao().strip());
-				this.stmt.setString(12, linha.getReceitaPrincipal().strip());
-				this.stmt.setString(13, linha.getTipoCredito().strip());
-				this.stmt.setString(14, linha.getDataInscricao().strip());
-				this.stmt.setString(15, linha.getIndicadorAjuizado().strip());
-				this.stmt.setBigDecimal(16, linha.getValor());
-				this.stmt.setString(17, linha.getArquivoOrigem().strip());
+				this.stmt.setString(1, linha.cpfCnpj().replace(".", "").replace("/", "").replace("-", "").strip());
+				this.stmt.setString(2, linha.tipoPessoa().strip());
+				this.stmt.setString(3, linha.tipoDevedor().strip());
+				this.stmt.setString(4, linha.nomeDevedor().strip());
+				this.stmt.setString(5, linha.ufUnidadeResponsavel().strip());
+				this.stmt.setString(6, linha.unidadeResponsavel().strip());
+				this.stmt.setString(7, linha.entidadeResponsavel().strip());
+				this.stmt.setString(8, linha.unidadeInscricao().strip());
+				this.stmt.setString(9, linha.numeroInscricao().strip());
+				this.stmt.setString(10, linha.tipoSituacaoInscricao().strip());
+				this.stmt.setString(11, linha.situacaoInscricao().strip());
+				this.stmt.setString(12, linha.receitaPrincipal().strip());
+				this.stmt.setString(13, linha.tipoCredito().strip());
+				this.stmt.setString(14, linha.dataInscricao().strip());
+				this.stmt.setString(15, linha.indicadorAjuizado().strip());
+				this.stmt.setBigDecimal(16, linha.valor());
+				this.stmt.setString(17, linha.arquivoOrigem().strip());
 				this.stmt.addBatch();
 
 				this.index += 1;

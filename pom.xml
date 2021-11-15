@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>1.0.1</version>
+	<version>2.0.0</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -14,11 +14,13 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<maven.compiler.release>11</maven.compiler.release>
-		<graalvm.version>20.2.0</graalvm.version>
-		<sqlite.version>3.34.0</sqlite.version>
-		<picocli.version>4.6.1</picocli.version>
-		<jansi.version>2.2.0</jansi.version>
+		<maven.compiler.release>17</maven.compiler.release>
+		<graalvm.version>21.3.0</graalvm.version>
+		<native.maven.plugin.version>0.9.7.1</native.maven.plugin.version>
+		<sqlite.version>3.36.0.3</sqlite.version>
+		<picocli.version>4.6.2</picocli.version>
+		<jansi.version>2.4.0</jansi.version>
+		<opencsv.version>5.5.2</opencsv.version>
 	</properties>
 
 	<dependencies>
@@ -43,8 +45,13 @@
 			<version>${graalvm.version}</version>
 			<scope>provided</scope>
 		</dependency>
+		<dependency>
+		    <groupId>com.opencsv</groupId>
+		    <artifactId>opencsv</artifactId>
+		    <version>${opencsv.version}</version>
+		</dependency>
 	</dependencies>
-
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -93,26 +100,45 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.graalvm.nativeimage</groupId>
-				<artifactId>native-image-maven-plugin</artifactId>
-				<version>${graalvm.version}</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>native-image</goal>
-						</goals>
-						<phase>package</phase>
-					</execution>
-				</executions>
-				<configuration>
-					<skip>false</skip>
-					<imageName>DividaPGFN</imageName>
-					<buildArgs>
-						--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividaspgfn.DividaPGFN" -H:IncludeResources="db/.*|static/.*|templates/.*|.*.yml|.*.xml|.*/org/sqlite/.*|org/sqlite/.*" -H:JNIConfigurationFiles="../native-image/sqlite-jni.json" -H:Optimize=2 -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt
-					</buildArgs>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
+	
+	<profiles>
+		<profile>
+			<id>native</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.graalvm.buildtools</groupId>
+						<artifactId>native-maven-plugin</artifactId>
+						<version>${native.maven.plugin.version}</version>
+						<extensions>true</extensions>
+						<executions>
+							<execution>
+								<id>build-native</id>
+								<goals>
+									<goal>build</goal>
+								</goals>
+								<phase>package</phase>
+							</execution>
+							<execution>
+								<id>test-native</id>
+								<goals>
+									<goal>test</goal>
+								</goals>
+								<phase>test</phase>
+							</execution>
+						</executions>
+						<configuration>
+							<skip>false</skip>
+							<imageName>DividaPGFN</imageName>
+							<buildArgs>
+								--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividaspgfn.DividaPGFN" -H:IncludeResources="db/.*|static/.*|templates/.*|.*.yml|.*.xml|.*/org/sqlite/.*|org/sqlite/.*" -H:JNIConfigurationFiles="../native-image/sqlite-jni.json" -H:Optimize=2 -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt -H:DefaultLocale=pt-BR --initialize-at-build-time="com.ric"
+							</buildArgs>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
