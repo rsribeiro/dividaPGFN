@@ -1,8 +1,13 @@
-#maven build
+#build
 /target
+/releases
+build.bat
 
 #eclipse
 /bin
 /.settings
 .classpath
 .project
+
+#maven
+dependency-reduced-pom.xml
