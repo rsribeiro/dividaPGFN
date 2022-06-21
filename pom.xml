@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>2.0.0</version>
+	<version>2.1.0</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -15,12 +15,19 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>17</maven.compiler.release>
-		<graalvm.version>21.3.0</graalvm.version>
-		<native.maven.plugin.version>0.9.7.1</native.maven.plugin.version>
+		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+		<maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+		<maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
+		<maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
+		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+		<maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
+		<maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
+		<graalvm.version>22.1.0</graalvm.version>
+		<native.maven.plugin.version>0.9.11</native.maven.plugin.version>
 		<sqlite.version>3.36.0.3</sqlite.version>
-		<picocli.version>4.6.2</picocli.version>
+		<picocli.version>4.6.3</picocli.version>
 		<jansi.version>2.4.0</jansi.version>
-		<opencsv.version>5.5.2</opencsv.version>
+		<opencsv.version>5.6</opencsv.version>
 	</properties>
 
 	<dependencies>
@@ -57,7 +64,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
+				<version>${maven-compiler-plugin.version}</version>
 				<configuration>
 					<release>${maven.compiler.release}</release>
 					<annotationProcessorPaths>
@@ -75,7 +82,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.3.0</version>
+				<version>${maven-assembly-plugin.version}</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -99,6 +106,42 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>${maven-shade-plugin.version}</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<shadedArtifactAttached>true</shadedArtifactAttached>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-clean-plugin</artifactId>
+		        <version>${maven-clean-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-jar-plugin</artifactId>
+		        <version>${maven-jar-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-resources-plugin</artifactId>
+		        <version>${maven-resources-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-surefire-plugin</artifactId>
+		        <version>${maven-surefire-plugin.version}</version>
 			</plugin>
 		</plugins>
 	</build>
@@ -131,10 +174,14 @@
 						</executions>
 						<configuration>
 							<skip>false</skip>
+							<useArgFile>false</useArgFile>
 							<imageName>DividaPGFN</imageName>
 							<buildArgs>
-								--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividaspgfn.DividaPGFN" -H:IncludeResources="db/.*|static/.*|templates/.*|.*.yml|.*.xml|.*/org/sqlite/.*|org/sqlite/.*" -H:JNIConfigurationFiles="../native-image/sqlite-jni.json" -H:Optimize=2 -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt -H:DefaultLocale=pt-BR --initialize-at-build-time="com.ric"
+								--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividaspgfn.DividaPGFN" -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt --initialize-at-build-time="com.ric"
 							</buildArgs>
+							<classpath>
+								<param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</param>
+							</classpath>
 						</configuration>
 					</plugin>
 				</plugins>
