@@ -25,6 +25,8 @@ final class BasePGFN implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
+		long t0 = System.nanoTime();
+
 		Path dirEntrada = this.dirBase.resolve("entrada");
 
 		Path dirFGTS = dirEntrada.resolve("FGTS");
@@ -37,24 +39,25 @@ final class BasePGFN implements Callable<Integer> {
 		Common.mensagemProgresso("Criando base em " + baseConsolidada.toAbsolutePath());
 
 		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + baseConsolidada.toAbsolutePath());) {
-			Common.executeUpdateStatement(conn, "CREATE TABLE pgfn_devedores " +
-					"(`cpf_cnpj` TEXT, " +
-					"`tipo_pessoa` TEXT, " +
-					"`tipo_devedor` TEXT, " +
-					"`nome_devedor` TEXT, " +
-					"`uf_unidade_responsavel` TEXT, " +
-					"`unidade_responsavel` TEXT, " +
-					"`entidade_responsavel` TEXT, " +
-					"`unidade_inscricao` TEXT, " +
-					"`numero_inscricao` TEXT, " +
-					"`tipo_situacao_inscricao` TEXT, " +
-					"`situacao_inscricao` TEXT, " +
-					"`receita_principal` TEXT, " +
-					"`tipo_credito` TEXT, " +
-					"`data_inscricao` TEXT, " +
-					"`indicador_ajuizado` TEXT, " +
-					"`valor_consolidado` REAL, " +
-					"`arquivo_origem` TEXT)");
+			Common.executeUpdateStatement(conn, """
+					CREATE TABLE pgfn_devedores
+					(`cpf_cnpj` TEXT,
+					`tipo_pessoa` TEXT,
+					`tipo_devedor` TEXT,
+					`nome_devedor` TEXT,
+					`uf_unidade_responsavel` TEXT,
+					`unidade_responsavel` TEXT,
+					`entidade_responsavel` TEXT,
+					`unidade_inscricao` TEXT,
+					`numero_inscricao` TEXT,
+					`tipo_situacao_inscricao` TEXT,
+					`situacao_inscricao` TEXT,
+					`receita_principal` TEXT,
+					`tipo_credito` TEXT,
+					`data_inscricao` TEXT,
+					`indicador_ajuizado` TEXT,
+					`valor_consolidado` REAL,
+					`arquivo_origem` TEXT)""");
 
 			Stream<LinhaPGFN> linhas = Stream
 					.of(leBase(dirFGTS, this::linhaFGTS), leBase(dirPrevidenciaria, this::linhaPrevidenciaria), leBase(dirGeral, this::linhaGeral))
@@ -62,24 +65,25 @@ final class BasePGFN implements Callable<Integer> {
 
 			conn.setAutoCommit(false);
 			System.out.println("Inserindo linhas...");
-			try (PreparedStatement stmt = conn.prepareStatement("insert into pgfn_devedores (cpf_cnpj, " +
-					"tipo_pessoa, " +
-					"tipo_devedor, " +
-					"nome_devedor, " +
-					"uf_unidade_responsavel, " +
-					"unidade_responsavel, " +
-					"entidade_responsavel, " +
-					"unidade_inscricao, " +
-					"numero_inscricao, " +
-					"tipo_situacao_inscricao, " +
-					"situacao_inscricao, " +
-					"receita_principal, " +
-					"tipo_credito, " +
-					"data_inscricao, " +
-					"indicador_ajuizado, " +
-					"valor_consolidado, " +
-					"arquivo_origem) " +
-					"values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");) {
+			try (PreparedStatement stmt = conn.prepareStatement("""
+					insert into pgfn_devedores (cpf_cnpj,
+					tipo_pessoa,
+					tipo_devedor,
+					nome_devedor,
+					uf_unidade_responsavel,
+					unidade_responsavel,
+					entidade_responsavel,
+					unidade_inscricao,
+					numero_inscricao,
+					tipo_situacao_inscricao,
+					situacao_inscricao,
+					receita_principal,
+					tipo_credito,
+					data_inscricao,
+					indicador_ajuizado,
+					valor_consolidado,
+					arquivo_origem)
+					values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""");) {
 				BatchAux aux = new BatchAux(stmt);
 				linhas.forEach(aux::appendLinha);
 				stmt.executeBatch();
@@ -93,7 +97,7 @@ final class BasePGFN implements Callable<Integer> {
 			System.out.println("Índice criado.");
 		}
 
-		Common.mensagemProgresso("Execução finalizada com sucesso.");
+		Common.mensagemProgresso("Programa executado em " + (System.nanoTime()-t0)/1E9 + " segundos.");
 
 		return 0;
 	}
