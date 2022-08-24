@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>2.1.0</version>
+	<version>2.2.0</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -16,18 +16,18 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.release>17</maven.compiler.release>
 		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-		<maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+		<maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
 		<maven-jar-plugin.version>3.2.2</maven-jar-plugin.version>
-		<maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
+		<maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
 		<maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
 		<maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
 		<maven-shade-plugin.version>3.3.0</maven-shade-plugin.version>
-		<graalvm.version>22.1.0</graalvm.version>
-		<native.maven.plugin.version>0.9.11</native.maven.plugin.version>
-		<sqlite.version>3.36.0.3</sqlite.version>
+		<graalvm.version>22.2.0</graalvm.version>
+		<native-maven-plugin.version>0.9.13</native-maven-plugin.version>
+		<sqlite.version>3.39.2.0</sqlite.version>
 		<picocli.version>4.6.3</picocli.version>
-		<jansi.version>2.4.0</jansi.version>
 		<opencsv.version>5.6</opencsv.version>
+		<tinylog.version>2.5.0</tinylog.version>
 	</properties>
 
 	<dependencies>
@@ -42,11 +42,6 @@
 			<version>${picocli.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.fusesource.jansi</groupId>
-			<artifactId>jansi</artifactId>
-			<version>${jansi.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.graalvm.sdk</groupId>
 			<artifactId>graal-sdk</artifactId>
 			<version>${graalvm.version}</version>
@@ -56,6 +51,11 @@
 		    <groupId>com.opencsv</groupId>
 		    <artifactId>opencsv</artifactId>
 		    <version>${opencsv.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.tinylog</groupId>
+		    <artifactId>tinylog-impl</artifactId>
+		    <version>${tinylog.version}</version>
 		</dependency>
 	</dependencies>
 	
@@ -100,7 +100,7 @@
 							<appendAssemblyId>false</appendAssemblyId>
 							<archive>
 								<manifest>
-									<mainClass>com.ric.dividaspgfn.DividaPGFN</mainClass>
+									<mainClass>com.ric.dividapgfn.DividaPGFN</mainClass>
 								</manifest>
 							</archive>
 						</configuration>
@@ -154,7 +154,7 @@
 					<plugin>
 						<groupId>org.graalvm.buildtools</groupId>
 						<artifactId>native-maven-plugin</artifactId>
-						<version>${native.maven.plugin.version}</version>
+						<version>${native-maven-plugin.version}</version>
 						<extensions>true</extensions>
 						<executions>
 							<execution>
@@ -177,7 +177,7 @@
 							<useArgFile>false</useArgFile>
 							<imageName>DividaPGFN</imageName>
 							<buildArgs>
-								--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividaspgfn.DividaPGFN" -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt --initialize-at-build-time="com.ric"
+								--no-fallback --static -jar ..\target\DividaPGFN.jar -H:Class="com.ric.dividapgfn.DividaPGFN" -Dfile.encoding=UTF-8 -Duser.country=BR -Duser.language=pt --initialize-at-build-time="com.ric"
 							</buildArgs>
 							<classpath>
 								<param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</param>

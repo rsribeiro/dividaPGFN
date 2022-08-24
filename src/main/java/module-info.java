@@ -1,8 +1,9 @@
-module com.ric.dividaspgfn {
+module com.ric.dividapgfn {
 	requires java.sql;
 	requires info.picocli;
-	requires org.fusesource.jansi;
 	requires com.opencsv;
+	requires org.tinylog.api;
+	requires org.xerial.sqlitejdbc;
 
-	opens com.ric.dividaspgfn to info.picocli;
+	opens com.ric.dividapgfn to info.picocli;
 }

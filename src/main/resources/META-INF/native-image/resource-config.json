@@ -1,0 +1,30 @@
+{
+  "resources":{
+  "includes":[
+    {
+      "pattern":"\\QMETA-INF/maven/org.xerial/sqlite-jdbc/pom.properties\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/java.sql.Driver\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/org.tinylog.configuration.ConfigurationLoader\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/org.tinylog.provider.LoggingProvider\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/org.tinylog.throwable.ThrowableFilter\\E"
+    }, 
+    {
+      "pattern":"\\QMETA-INF/services/org.tinylog.writers.Writer\\E"
+    }, 
+    {
+      "pattern":"\\Qorg/sqlite/native/Windows/x86_64/sqlitejdbc.dll\\E"
+    }, 
+    {
+      "pattern":"\\Qtinylog.properties\\E"
+    }
+  ]},
+  "bundles":[]
+}
