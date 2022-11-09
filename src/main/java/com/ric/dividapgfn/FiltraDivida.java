@@ -3,7 +3,6 @@ package com.ric.dividapgfn;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -15,10 +14,8 @@ import java.util.concurrent.Callable;
 
 import org.tinylog.Logger;
 
-import com.opencsv.CSVWriterBuilder;
-import com.opencsv.ICSVWriter;
+import com.ric.dividapgfn.csv.CSVWriter;
 import com.ric.dividapgfn.util.Common;
-import com.ric.dividapgfn.util.HelperResultSet;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -50,20 +47,20 @@ public final class FiltraDivida implements Callable<Integer> {
 			throw new UncheckedIOException(e);
 		}
 
-		Logger.info("Criando arquivos de análise em " + dirSaida.toAbsolutePath());
+		Logger.info("Criando arquivos de análise em {}", dirSaida.toAbsolutePath());
 
 		if (Files.notExists(basePGFN)) {
-			Logger.error("Erro: arquivo " + basePGFN.toAbsolutePath() + " não encontrado.");
+			Logger.error("Erro: arquivo {} não encontrado.", basePGFN.toAbsolutePath());
 			return CommandLine.ExitCode.USAGE;
 		}
 
 		if (Files.notExists(this.baseCNPJ)) {
-			Logger.error("Erro: arquivo " + this.baseCNPJ.toAbsolutePath() + " não encontrado.");
+			Logger.error("Erro: arquivo {} não encontrado.", this.baseCNPJ.toAbsolutePath());
 			return CommandLine.ExitCode.USAGE;
 		}
 
 		if (Files.notExists(this.arqConsulta)) {
-			Logger.error("Erro: arquivo " + this.arqConsulta.toAbsolutePath() + " não encontrado.");
+			Logger.error("Erro: arquivo {} não encontrado.", this.arqConsulta.toAbsolutePath());
 			return CommandLine.ExitCode.USAGE;
 		}
 
@@ -81,32 +78,41 @@ public final class FiltraDivida implements Callable<Integer> {
 				throw new UncheckedIOException(e);
 			}
 
+			indiceTabelaCNPJ(conn);
 			tabelaInscricoesDivida(conn);
+			indiceTabelaInscricoesDivida(conn);
 			tabelaDivida(conn);
+			indiceTabelaDivida(conn);
 			exportaBaseDivida(conn, dirSaida.resolve("divida.csv"));
 			exportaCadastroCNPJ(conn, dirSaida.resolve("cnpj.csv"));
 			exportaCadastroSocios(conn, dirSaida.resolve("socios.csv"));
 			exportaTabelaCorresponsaveis(conn, dirSaida.resolve("corresponsaveis.csv"));
 		} catch (SQLException e) {
-			Logger.error("Erro SQL: " + e.getLocalizedMessage());
+			Logger.error("Erro SQL: {}", e.getLocalizedMessage());
 			return CommandLine.ExitCode.SOFTWARE;
 		}
 
-		Logger.info("Programa executado em " + Common.formatDuration(System.nanoTime()-t0));
+		Logger.info("Programa executado em {}", Common.formatDuration(System.nanoTime()-t0));
 
 		return CommandLine.ExitCode.OK;
 	}
 
 	private void tabelaCNPJ(Connection conn, String consulta) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando tabela temporária com CNPJs...");
 		Common.executeUpdateStatement(conn, "create table temp.cnpj as " + consulta);
+		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
+	}
+
+	private void indiceTabelaCNPJ(Connection conn) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando índice...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_cnpj` ON `cnpj` (`cnpj_basico`)");
-		Logger.info("Índice criado.");
-		Logger.info("Tabela criada.");
+		Logger.info("Índice criado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void tabelaInscricoesDivida(Connection conn) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando tabela temporária com inscrições da dívida relevantes");
 		Common.executeUpdateStatement(conn, """
 				create table temp.inscricao_divida as
@@ -114,13 +120,18 @@ public final class FiltraDivida implements Callable<Integer> {
 				from temp.cnpj cnpj
 				join pgfn.pgfn_devedores dev
 				on cnpj.cnpj_basico = substr(dev.cpf_cnpj,1,8)""");
+		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
+	}
+
+	private void indiceTabelaInscricoesDivida(Connection conn) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando índice...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_insc_divida` ON `inscricao_divida` (`numero_inscricao`)");
-		Logger.info("Índice criado.");
-		Logger.info("Tabela criada.");
+		Logger.info("Índice criado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void tabelaDivida(Connection conn) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando tabela temporária das dívidas");
 		Common.executeUpdateStatement(conn, """
 				create table temp.divida as
@@ -130,28 +141,33 @@ public final class FiltraDivida implements Callable<Integer> {
 				from temp.inscricao_divida div
 				join pgfn.pgfn_devedores dev
 				on div.numero_inscricao = dev.numero_inscricao""");
+		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
+	}
+
+	private void indiceTabelaDivida(Connection conn) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Criando índices...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_divida_cnpj` ON `divida` (`cnpj_matriz`)");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_divida_insc` ON `divida` (`numero_inscricao`)");
-		Logger.info("Índices criado.");
-		Logger.info("Tabela criada.");
+		Logger.info("Índices criados em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void exportaBaseDivida(Connection conn, Path arquivo) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Exportando base da dívida...");
 		try (Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("select * from temp.divida order by CPF_CNPJ, DATA_INSCRICAO, NUMERO_INSCRICAO");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
-
-			ICSVWriter writer = getCSVWriter(out);
-			writer.writeAll(rs, true, true, false);
+			CSVWriter writer = new CSVWriter(this.separador);
+			writer.write(rs, out, true);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logger.info("Base exportada.");
+		Logger.info("Base exportada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void exportaCadastroCNPJ(Connection conn, Path arquivo) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Exportando base de cadastro CNPJ...");
 		try (Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("""
@@ -202,16 +218,16 @@ public final class FiltraDivida implements Callable<Integer> {
 						where emp.cnpj_basico in (select distinct cnpj_matriz from temp.divida where tipo_pessoa = 'PESSOA JURÍDICA')
 						order by est.cnpj""");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
-
-			ICSVWriter writer = getCSVWriter(out);
-			writer.writeAll(rs, true, true, false);
+			CSVWriter writer = new CSVWriter(this.separador);
+			writer.write(rs, out, true);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logger.info("Base exportada.");
+		Logger.info("Base exportada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void exportaCadastroSocios(Connection conn, Path arquivo) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Exportando cadastro de sócios...");
 		try (Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("""
@@ -239,16 +255,16 @@ public final class FiltraDivida implements Callable<Integer> {
 						where est.cnpj_basico in (select distinct cnpj_matriz from temp.divida)
 						order by soc.cnpj, soc.identificador_de_socio""");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
-
-			ICSVWriter writer = getCSVWriter(out);
-			writer.writeAll(rs, true, true, false);
+			CSVWriter writer = new CSVWriter(this.separador);
+			writer.write(rs, out, true);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logger.info("Cadastro exportado.");
+		Logger.info("Cadastro exportado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private void exportaTabelaCorresponsaveis(Connection conn, Path arquivo) throws SQLException {
+		long t0 = System.nanoTime();
 		Logger.info("Exportando tabela de corresponsaveis...");
 		try (Statement stmt = conn.createStatement();
 				ResultSet rs = stmt.executeQuery("""
@@ -265,21 +281,11 @@ public final class FiltraDivida implements Callable<Integer> {
 						group by p.cnpj_matriz, p.nome_devedor, s.cnpj_matriz, s.nome_devedor
 						order by divida_devedor_principal desc, valor_corresponsabilidade desc, cpf_cnpj_secundario""");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
-
-			ICSVWriter writer = getCSVWriter(out);
-			writer.writeAll(rs, true, true, false);
+			CSVWriter writer = new CSVWriter(this.separador);
+			writer.write(rs, out, true);
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		Logger.info("Tabela exportada.");
-	}
-
-	private ICSVWriter getCSVWriter(Writer out) {
-		ICSVWriter writer = new CSVWriterBuilder(out)
-				.withSeparator(this.separador)
-				.withResultSetHelper(new HelperResultSet())
-				.build();
-
-		return writer;
+		Logger.info("Tabela exportada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 }

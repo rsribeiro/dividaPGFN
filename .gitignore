@@ -1,7 +1,8 @@
 #build
 /target
 /releases
-build.bat
+/scripts
+/build
 
 #eclipse
 /bin
