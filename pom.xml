@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>2.3.0</version>
+	<version>2.3.1</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -14,30 +14,25 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven-minimum-version>3.2.5</maven-minimum-version>
 		<maven.compiler.release>19</maven.compiler.release>
 		<maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
 		<maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
+		<maven-enforcer-plugin.version>3.2.1</maven-enforcer-plugin.version>
 		<maven-jlink-plugin.version>3.1.0</maven-jlink-plugin.version>
 		<maven-resources-plugin.version>3.3.0</maven-resources-plugin.version>
-		<maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
+		<maven-surefire-plugin.version>3.0.0-M8</maven-surefire-plugin.version>
 		<maven-assembly-plugin.version>3.4.2</maven-assembly-plugin.version>
 		<maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-		<maven-shade-plugin.version>3.4.0</maven-shade-plugin.version>
-		<moditect-maven-plugin.version>1.0.0.RC2</moditect-maven-plugin.version>
-		<sqlite.version>3.39.4.0</sqlite.version>
-		<picocli.version>4.7.0</picocli.version>
-		<tinylog.version>2.5.0</tinylog.version>
-		<animal-sniffer.version>1.22</animal-sniffer.version>
+		<maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
+		<sqlite.version>3.40.1.0</sqlite.version>
+		<picocli.version>4.7.1</picocli.version>
+		<tinylog.version>2.6.0</tinylog.version>
 		<graalvm.version>22.3.0</graalvm.version>
 		<native-maven-plugin.version>0.9.17</native-maven-plugin.version>
 	</properties>
 
 	<dependencies>
-		<dependency>
-            <groupId>org.codehaus.mojo</groupId>
-		    <artifactId>animal-sniffer-annotations</artifactId>
-		    <version>${animal-sniffer.version}</version>
-        </dependency>
 		<dependency>
 			<groupId>org.xerial</groupId>
 			<artifactId>sqlite-jdbc</artifactId>
@@ -130,10 +125,6 @@
 						</fileset>
 						<fileset>
 							<directory>${basedir}/build</directory>
-							<includes>
-								<include>dividaPGFN.7z</include>
-								<include>dividaPGFN.exe</include>
-							</includes>
 						</fileset>
 					</filesets>
 				</configuration>
@@ -175,67 +166,23 @@
 				</configuration>
 			</plugin>
 			<plugin>
-			    <groupId>org.moditect</groupId>
-			    <artifactId>moditect-maven-plugin</artifactId>
-			    <version>${moditect-maven-plugin.version}</version>
-			    <executions>
-			        <execution>
-			            <id>add-module-infos</id>
-			            <phase>generate-resources</phase>
-			            <goals>
-			                <goal>add-module-info</goal>
-			            </goals>
-			            <configuration>
-			                <outputDirectory>${project.build.directory}/modules</outputDirectory>
-			                <modules>
-			                    <module>
-			                        <artifact>
-			                            <groupId>org.xerial</groupId>
-										<artifactId>sqlite-jdbc</artifactId>
-										<version>${sqlite.version}</version>
-			                        </artifact>
-			                        <moduleInfoSource>
-			                            module org.xerial.sqlitejdbc {
-			                            	requires java.sql;
-											provides java.sql.Driver with org.sqlite.JDBC;
-			                            }
-			                        </moduleInfoSource>
-			                    </module>
-			                </modules>
-			            </configuration>
-			        </execution>
-			        <execution>
-			            <id>create-runtime-image</id>
-			            <phase>package</phase>
-			            <goals>
-			                <goal>create-runtime-image</goal>
-			            </goals>
-			            <configuration>
-			                <modulePath>
-			                	<path>${project.build.directory}/dividapgfn-${project.version}.jar</path>
-			                    <path>${project.build.directory}/modules</path>
-			                    <path>${settings.localRepository}/org/tinylog/tinylog-impl/${tinylog.version}/tinylog-impl-${tinylog.version}.jar</path>
-			                    <path>${settings.localRepository}/org/tinylog/tinylog-api/${tinylog.version}/tinylog-api-${tinylog.version}.jar</path>
-			                    <path>${settings.localRepository}/info/picocli/picocli/${picocli.version}/picocli-${picocli.version}.jar</path>
-			                </modulePath>
-			                <modules>
-			                    <module>com.ric.dividapgfn</module>
-			                </modules>
-			                <launcher>
-			                    <name>dividapgfn</name>
-			                    <module>com.ric.dividapgfn</module>
-			                </launcher>
-			                <outputDirectory>
-			                    ${project.build.directory}/jlink-image
-			                </outputDirectory>
-			                <noManPages>true</noManPages>
-			                <noHeaderFiles>true</noHeaderFiles>
-			                <stripDebug>true</stripDebug>
-			                <compression>2</compression>
-			                <jarInclusionPolicy>NONE</jarInclusionPolicy>
-			                <bindServices>true</bindServices>
-			            </configuration>
-			        </execution>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>${maven-enforcer-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>${maven-minimum-version}</version>
+								</requireMavenVersion>
+							</rules>    
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>

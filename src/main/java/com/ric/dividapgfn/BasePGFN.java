@@ -308,13 +308,17 @@ public final class BasePGFN implements Callable<Integer> {
 	}
 
 	private <T> Stream<T> leArquivoIndividual(Path entrada, Function<String,T> mapeamento) {
-		try {
-			return Files
-					.lines(entrada, Common.CHARSET)
-					.skip(1)
-					.map(mapeamento);
-		} catch (IOException e) {
-			throw new UncheckedIOException(e);
+		if (Files.isRegularFile(entrada)) {
+			try {
+				return Files
+						.lines(entrada, Common.CHARSET)
+						.skip(1)
+						.map(mapeamento);
+			} catch (IOException e) {
+				throw new UncheckedIOException(e);
+			}
+		} else {
+			return Stream.empty();
 		}
 	}
 

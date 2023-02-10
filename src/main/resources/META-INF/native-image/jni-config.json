@@ -1,11 +1,18 @@
 [
 {
+  "name":"[Z"
+},
+{
   "name":"java.lang.Boolean",
   "methods":[{"name":"getBoolean","parameterTypes":["java.lang.String"] }]
 },
 {
   "name":"java.lang.Throwable",
   "methods":[{"name":"toString","parameterTypes":[] }]
+},
+{
+  "name":"org.sqlite.BusyHandler",
+  "methods":[{"name":"callback","parameterTypes":["int"] }]
 },
 {
   "name":"org.sqlite.Collation",
@@ -36,11 +43,14 @@
   ]
 },
 {
-  "name":"org.sqlite.ProgressHandler"
+  "name":"org.sqlite.ProgressHandler",
+  "methods":[{"name":"progress","parameterTypes":[] }]
 },
 {
   "name":"org.sqlite.core.DB",
   "methods":[
+    {"name":"onCommit","parameterTypes":["boolean"] }, 
+    {"name":"onUpdate","parameterTypes":["int","java.lang.String","java.lang.String","long"] }, 
     {"name":"throwex","parameterTypes":[] }, 
     {"name":"throwex","parameterTypes":["int"] }
   ]
