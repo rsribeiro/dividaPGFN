@@ -5,13 +5,15 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.Callable;
 
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteConfig.TempStore;
+import org.sqlite.SQLiteConnection;
 import org.tinylog.Logger;
 
 import com.ric.dividapgfn.csv.CSVWriter;
@@ -65,10 +67,18 @@ public final class FiltraDivida implements Callable<Integer> {
 		}
 
 		try {
+			SQLiteConfig config = new SQLiteConfig();
+			config.setReadOnly(true);
+			config.setTempStore(TempStore.MEMORY);
+
 			Logger.info("Conectando base CNPJ...");
-			Connection conn = DriverManager.getConnection("jdbc:sqlite:" + this.baseCNPJ.toAbsolutePath());
+			SQLiteConnection conn = DriverManager
+					.getConnection("jdbc:sqlite:file:///" + this.baseCNPJ.toAbsolutePath() + "?mode=ro", config.toProperties())
+					.unwrap(SQLiteConnection.class);
+			conn.setReadOnly(true);
+			conn.setAutoCommit(false);
 			Logger.info("Conectando base PGFN...");
-			Common.executeUpdateStatement(conn, "ATTACH '" + basePGFN.toAbsolutePath() + "' AS `pgfn` KEY ''");
+			Common.executeUpdateStatement(conn, "ATTACH 'file:///" + basePGFN.toAbsolutePath() + "?mode=ro' AS `pgfn` KEY ''");
 
 			try {
 				String consulta = Files.readString(this.arqConsulta, Common.CHARSET);
@@ -97,21 +107,21 @@ public final class FiltraDivida implements Callable<Integer> {
 		return CommandLine.ExitCode.OK;
 	}
 
-	private void tabelaCNPJ(Connection conn, String consulta) throws SQLException {
+	private void tabelaCNPJ(SQLiteConnection conn, String consulta) throws SQLException {
 		long t0 = System.nanoTime();
-		Logger.info("Criando tabela temporária com CNPJs...");
+		Logger.info("Criando tabela temporária com CNPJs de acordo com consulta...");
 		Common.executeUpdateStatement(conn, "create table temp.cnpj as " + consulta);
 		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void indiceTabelaCNPJ(Connection conn) throws SQLException {
+	private void indiceTabelaCNPJ(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Criando índice...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_cnpj` ON `cnpj` (`cnpj_basico`)");
 		Logger.info("Índice criado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void tabelaInscricoesDivida(Connection conn) throws SQLException {
+	private void tabelaInscricoesDivida(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Criando tabela temporária com inscrições da dívida relevantes");
 		Common.executeUpdateStatement(conn, """
@@ -119,18 +129,18 @@ public final class FiltraDivida implements Callable<Integer> {
 				select distinct dev.numero_inscricao
 				from temp.cnpj cnpj
 				join pgfn.pgfn_devedores dev
-				on cnpj.cnpj_basico = substr(dev.cpf_cnpj,1,8)""");
+					on cnpj.cnpj_basico = substr(dev.cpf_cnpj,1,8)""");
 		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void indiceTabelaInscricoesDivida(Connection conn) throws SQLException {
+	private void indiceTabelaInscricoesDivida(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Criando índice...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_insc_divida` ON `inscricao_divida` (`numero_inscricao`)");
 		Logger.info("Índice criado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void tabelaDivida(Connection conn) throws SQLException {
+	private void tabelaDivida(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Criando tabela temporária das dívidas");
 		Common.executeUpdateStatement(conn, """
@@ -144,7 +154,7 @@ public final class FiltraDivida implements Callable<Integer> {
 		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void indiceTabelaDivida(Connection conn) throws SQLException {
+	private void indiceTabelaDivida(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Criando índices...");
 		Common.executeUpdateStatement(conn, "CREATE INDEX `temp.index_tmp_divida_cnpj` ON `divida` (`cnpj_matriz`)");
@@ -152,7 +162,7 @@ public final class FiltraDivida implements Callable<Integer> {
 		Logger.info("Índices criados em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void exportaBaseDivida(Connection conn, Path arquivo) throws SQLException {
+	private void exportaBaseDivida(SQLiteConnection conn, Path arquivo) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Exportando base da dívida...");
 		try (Statement stmt = conn.createStatement();
@@ -166,7 +176,7 @@ public final class FiltraDivida implements Callable<Integer> {
 		Logger.info("Base exportada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void exportaCadastroCNPJ(Connection conn, Path arquivo) throws SQLException {
+	private void exportaCadastroCNPJ(SQLiteConnection conn, Path arquivo) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Exportando base de cadastro CNPJ...");
 		try (Statement stmt = conn.createStatement();
@@ -211,10 +221,14 @@ public final class FiltraDivida implements Callable<Integer> {
 							emp.porte_empresa,
 							emp.ente_federativo_responsavel
 						from empresas emp
-						join estabelecimento est on emp.cnpj_basico = est.cnpj_basico
-						left outer join cnae cnae on est.cnae_fiscal = cnae.codigo
-						left outer join natureza_juridica nj on emp.natureza_juridica = nj.codigo
-						left outer join pais pais on est.pais = pais.codigo
+						join estabelecimento est
+							on emp.cnpj_basico = est.cnpj_basico
+						left outer join cnae cnae
+							on est.cnae_fiscal = cnae.codigo
+						left outer join natureza_juridica nj
+							on emp.natureza_juridica = nj.codigo
+						left outer join pais pais
+							on est.pais = pais.codigo
 						where emp.cnpj_basico in (select distinct cnpj_matriz from temp.divida where tipo_pessoa = 'PESSOA JURÍDICA')
 						order by est.cnpj""");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
@@ -226,7 +240,7 @@ public final class FiltraDivida implements Callable<Integer> {
 		Logger.info("Base exportada em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void exportaCadastroSocios(Connection conn, Path arquivo) throws SQLException {
+	private void exportaCadastroSocios(SQLiteConnection conn, Path arquivo) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Exportando cadastro de sócios...");
 		try (Statement stmt = conn.createStatement();
@@ -249,9 +263,12 @@ public final class FiltraDivida implements Callable<Integer> {
 							soc.qualificacao_representante_legal,
 							soc.faixa_etaria
 						from estabelecimento est
-							join empresas emp on est.cnpj_basico = emp.cnpj_basico
-							left outer join socios soc on est.cnpj = soc.cnpj
-							left outer join qualificacao_socio qs on soc.qualificacao_socio = qs.codigo
+							join empresas emp
+								on est.cnpj_basico = emp.cnpj_basico
+							left outer join socios soc
+								on est.cnpj = soc.cnpj
+							left outer join qualificacao_socio qs
+								on soc.qualificacao_socio = qs.codigo
 						where est.cnpj_basico in (select distinct cnpj_matriz from temp.divida)
 						order by soc.cnpj, soc.identificador_de_socio""");
 				BufferedWriter out = Files.newBufferedWriter(arquivo, Common.CHARSET);) {
@@ -263,7 +280,7 @@ public final class FiltraDivida implements Callable<Integer> {
 		Logger.info("Cadastro exportado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
-	private void exportaTabelaCorresponsaveis(Connection conn, Path arquivo) throws SQLException {
+	private void exportaTabelaCorresponsaveis(SQLiteConnection conn, Path arquivo) throws SQLException {
 		long t0 = System.nanoTime();
 		Logger.info("Exportando tabela de corresponsaveis...");
 		try (Statement stmt = conn.createStatement();
@@ -275,8 +292,10 @@ public final class FiltraDivida implements Callable<Integer> {
 							sum(p.valor_consolidado) as valor_corresponsabilidade,
 							t.valor as divida_devedor_principal
 						from temp.divida p
-							join temp.divida s on p.numero_inscricao = s.numero_inscricao
-							join t_total t on p.cnpj_matriz = t.cnpj_matriz
+						join temp.divida s
+							on p.numero_inscricao = s.numero_inscricao
+						join t_total t
+							on p.cnpj_matriz = t.cnpj_matriz
 						where p.tipo_devedor = 'PRINCIPAL' and s.tipo_devedor <> 'PRINCIPAL'
 						group by p.cnpj_matriz, p.nome_devedor, s.cnpj_matriz, s.nome_devedor
 						order by divida_devedor_principal desc, valor_corresponsabilidade desc, cpf_cnpj_secundario""");

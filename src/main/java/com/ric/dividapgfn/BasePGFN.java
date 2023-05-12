@@ -6,7 +6,6 @@ import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -14,6 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.sqlite.SQLiteConnection;
 import org.tinylog.Logger;
 
 import com.ric.dividapgfn.linha.LinhaFGTS;
@@ -52,16 +52,15 @@ public final class BasePGFN implements Callable<Integer> {
 
 		Logger.info("Criando base em {}", baseConsolidada.toAbsolutePath());
 
-		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + baseConsolidada.toAbsolutePath());) {
+		try (SQLiteConnection conn = DriverManager.getConnection("jdbc:sqlite:file:///" + baseConsolidada.toAbsolutePath()).unwrap(SQLiteConnection.class);) {
 			conn.setAutoCommit(false);
 
-			criaTabelaFGTS(dirFGTS, conn);
-			indiceTabelaFGTS(conn);
-			criaTabelaPrevidenciaria(dirPrevidenciaria, conn);
-			indiceTabelaPrevidenciaria(conn);
-			criaTabelaNaoPrevidenciaria(dirNaoPrevidenciaria, conn);
-			indiceTabelaNaoPrevidenciaria(conn);
-			criaView(conn);
+			criaTabelaGeral(conn);
+			carregaDadosFGTS(dirFGTS, conn);
+			carregaDadosPrevidenciarios(dirPrevidenciaria, conn);
+			carregaDadosNaoPrevidenciarios(dirNaoPrevidenciaria, conn);
+			criaIndicesTabelaGeral(conn);
+
 			conn.commit();
 		} catch (SQLException e) {
 			Logger.error("Erro SQL: {}", e.getLocalizedMessage());
@@ -73,13 +72,38 @@ public final class BasePGFN implements Callable<Integer> {
 		return CommandLine.ExitCode.USAGE;
 	}
 
-	private void criaView(Connection conn) throws SQLException {
+	private void criaTabelaGeral(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
-		Logger.info("Criando view...");
+		Logger.info("Criando tabela pgfn_devedores...");
 		Common.executeUpdateStatement(conn, """
-				CREATE VIEW pgfn_devedores as
-				select
-					cpf_cnpj,
+				CREATE TABLE pgfn_devedores(
+					cpf_cnpj TEXT,
+					tipo_pessoa TEXT,
+					tipo_devedor TEXT,
+					nome_devedor TEXT,
+					uf_unidade_responsavel TEXT,
+					unidade_responsavel TEXT,
+					entidade_responsavel TEXT,
+					unidade_inscricao TEXT,
+					numero_inscricao TEXT,
+					tipo_situacao_inscricao TEXT,
+					situacao_inscricao TEXT,
+					receita_principal TEXT,
+					tipo_credito TEXT,
+					data_inscricao TEXT,
+					indicador_ajuizado TEXT,
+					valor_consolidado REAL,
+					arquivo_origem TEXT
+				)""");
+		Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
+	}
+
+	private void carregaDadosFGTS(Path diretorio, SQLiteConnection conn) throws SQLException {
+		long t0 = System.nanoTime();
+		Logger.info("Carregando dados do FGTS...");
+		try (PreparedStatement stmt = conn.prepareStatement("""
+				insert into pgfn_devedores
+					(cpf_cnpj,
 					tipo_pessoa,
 					tipo_devedor,
 					nome_devedor,
@@ -91,210 +115,80 @@ public final class BasePGFN implements Callable<Integer> {
 					tipo_situacao_inscricao,
 					situacao_inscricao,
 					receita_principal,
-					null as tipo_credito,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado,
-					'FGTS' as arquivo_origem
-				from pgfn_fgts
-				union all select
-					cpf_cnpj,
+					valor_consolidado)
+				values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""");
+				BatchAux aux = new BatchAux(stmt);) {
+			leBase(diretorio, this::linhaFGTS).forEach(aux::appendLinhaFGTS);
+			Logger.info("Linhas inseridas em {}", Common.formatDuration(System.nanoTime()-t0));
+		} finally {
+			conn.commit();
+		}
+	}
+
+	private void carregaDadosPrevidenciarios(Path diretorio, SQLiteConnection conn) throws SQLException {
+		long t0 = System.nanoTime();
+		Logger.info("Carregando dados previdenciários...");
+		try (PreparedStatement stmt = conn.prepareStatement("""
+				insert into pgfn_devedores
+					(cpf_cnpj,
 					tipo_pessoa,
 					tipo_devedor,
 					nome_devedor,
 					uf_unidade_responsavel,
 					unidade_responsavel,
-					null as entidade_responsavel,
-					null as unidade_inscricao,
 					numero_inscricao,
 					tipo_situacao_inscricao,
 					situacao_inscricao,
 					receita_principal,
-					null as tipo_credito,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado,
-					'PREVIDENCIARIO' as arquivo_origem
-				from pgfn_previdenciario
-				union all select
-					cpf_cnpj,
+					valor_consolidado)
+				values (?,?,?,?,?,?,?,?,?,?,?,?,?)""");
+				BatchAux aux = new BatchAux(stmt);) {
+			leBase(diretorio, this::linhaPrevidenciaria)
+					.forEach(aux::appendLinhaPrevidenciaria);
+			Logger.info("Linhas inseridas em {}", Common.formatDuration(System.nanoTime()-t0));
+		} finally {
+			conn.commit();
+		}
+	}
+
+	private void carregaDadosNaoPrevidenciarios(Path diretorio, SQLiteConnection conn) throws SQLException {
+		long t0 = System.nanoTime();
+		Logger.info("Carregando dados não previdenciários...");
+		try (PreparedStatement stmt = conn.prepareStatement("""
+				insert into pgfn_devedores
+					(cpf_cnpj,
 					tipo_pessoa,
 					tipo_devedor,
 					nome_devedor,
 					uf_unidade_responsavel,
 					unidade_responsavel,
-					null as entidade_responsavel,
-					null as unidade_inscricao,
 					numero_inscricao,
 					tipo_situacao_inscricao,
 					situacao_inscricao,
-					null as receita_principal,
 					tipo_credito,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado,
-					'GERAL' as arquivo_origem
-				from pgfn_nao_previdenciario""");
-		Logger.info("View criada em {}", Common.formatDuration(System.nanoTime()-t0));
-	}
-
-	private void criaTabelaFGTS(Path diretorio, Connection conn) throws SQLException {
-		long t0 = System.nanoTime();
-		Logger.info("Crianto tabela de dados do FGTS...");
-		Common.executeUpdateStatement(conn, """
-				CREATE TABLE pgfn_fgts
-				(`cpf_cnpj` TEXT,
-				`tipo_pessoa` TEXT,
-				`tipo_devedor` TEXT,
-				`nome_devedor` TEXT,
-				`uf_unidade_responsavel` TEXT,
-				`unidade_responsavel` TEXT,
-				`entidade_responsavel` TEXT,
-				`unidade_inscricao` TEXT,
-				`numero_inscricao` TEXT,
-				`tipo_situacao_inscricao` TEXT,
-				`situacao_inscricao` TEXT,
-				`receita_principal` TEXT,
-				`data_inscricao` TEXT,
-				`indicador_ajuizado` TEXT,
-				`valor_consolidado` REAL)""");
-
-		Logger.info("Inserindo linhas...");
-		try (PreparedStatement stmt = conn.prepareStatement("""
-				insert into pgfn_fgts
-				(cpf_cnpj,
-				tipo_pessoa,
-				tipo_devedor,
-				nome_devedor,
-				uf_unidade_responsavel,
-				unidade_responsavel,
-				entidade_responsavel,
-				unidade_inscricao,
-				numero_inscricao,
-				tipo_situacao_inscricao,
-				situacao_inscricao,
-				receita_principal,
-				data_inscricao,
-				indicador_ajuizado,
-				valor_consolidado)
-				values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""");
-				BatchAux aux = new BatchAux(stmt);) {
-			leBase(diretorio, this::linhaFGTS).forEach(aux::appendLinhaFGTS);
-			Logger.info("Tabela criada em {}", Common.formatDuration(System.nanoTime()-t0));
-		} finally {
-			conn.commit();
-		}
-	}
-
-	private void indiceTabelaFGTS(Connection conn) throws SQLException {
-		long t0 = System.nanoTime();
-		Logger.info("Criando índice...");
-		Common.executeUpdateStatement(conn, "CREATE INDEX `index_fgts` ON `pgfn_fgts` (`cpf_cnpj`)");
-		Logger.info("Índice criado {}", Common.formatDuration(System.nanoTime()-t0));
-	}
-
-	private void criaTabelaPrevidenciaria(Path diretorio, Connection conn) throws SQLException {
-		long t0 = System.nanoTime();
-		Logger.info("Crianto tabela de dados previdenciários...");
-		Common.executeUpdateStatement(conn, """
-				CREATE TABLE pgfn_previdenciario
-				(`cpf_cnpj` TEXT,
-				`tipo_pessoa` TEXT,
-				`tipo_devedor` TEXT,
-				`nome_devedor` TEXT,
-				`uf_unidade_responsavel` TEXT,
-				`unidade_responsavel` TEXT,
-				`numero_inscricao` TEXT,
-				`tipo_situacao_inscricao` TEXT,
-				`situacao_inscricao` TEXT,
-				`receita_principal` TEXT,
-				`data_inscricao` TEXT,
-				`indicador_ajuizado` TEXT,
-				`valor_consolidado` REAL)""");
-
-		Logger.info("Inserindo linhas...");
-		try (PreparedStatement stmt = conn.prepareStatement("""
-				insert into pgfn_previdenciario
-				(cpf_cnpj,
-				tipo_pessoa,
-				tipo_devedor,
-				nome_devedor,
-				uf_unidade_responsavel,
-				unidade_responsavel,
-				numero_inscricao,
-				tipo_situacao_inscricao,
-				situacao_inscricao,
-				receita_principal,
-				data_inscricao,
-				indicador_ajuizado,
-				valor_consolidado)
-				values (?,?,?,?,?,?,?,?,?,?,?,?,?)""");
-				BatchAux aux = new BatchAux(stmt);) {
-			leBase(diretorio, this::linhaPrevidenciaria)
-					.forEach(aux::appendLinhaPrevidenciaria);
-			Logger.info("Linhas inseridas {}", Common.formatDuration(System.nanoTime()-t0));
-		} finally {
-			conn.commit();
-		}
-	}
-
-	private void indiceTabelaPrevidenciaria(Connection conn) throws SQLException {
-		long t0 = System.nanoTime();
-		Logger.info("Criando índice...");
-		Common.executeUpdateStatement(conn, "CREATE INDEX `index_previdenciario` ON `pgfn_previdenciario` (`cpf_cnpj`)");
-		Logger.info("Índice criado {}", Common.formatDuration(System.nanoTime()-t0));
-	}
-
-	private void criaTabelaNaoPrevidenciaria(Path diretorio, Connection conn) throws SQLException {
-		long t0 = System.nanoTime();
-		Logger.info("Crianto tabela de dados não previdenciários...");
-		Common.executeUpdateStatement(conn, """
-				CREATE TABLE pgfn_nao_previdenciario
-				(`cpf_cnpj` TEXT,
-				`tipo_pessoa` TEXT,
-				`tipo_devedor` TEXT,
-				`nome_devedor` TEXT,
-				`uf_unidade_responsavel` TEXT,
-				`unidade_responsavel` TEXT,
-				`numero_inscricao` TEXT,
-				`tipo_situacao_inscricao` TEXT,
-				`situacao_inscricao` TEXT,
-				`tipo_credito` TEXT,
-				`data_inscricao` TEXT,
-				`indicador_ajuizado` TEXT,
-				`valor_consolidado` REAL)""");
-
-		Logger.info("Inserindo linhas...");
-		try (PreparedStatement stmt = conn.prepareStatement("""
-				insert into pgfn_nao_previdenciario
-				(cpf_cnpj,
-				tipo_pessoa,
-				tipo_devedor,
-				nome_devedor,
-				uf_unidade_responsavel,
-				unidade_responsavel,
-				numero_inscricao,
-				tipo_situacao_inscricao,
-				situacao_inscricao,
-				tipo_credito,
-				data_inscricao,
-				indicador_ajuizado,
-				valor_consolidado)
+					valor_consolidado)
 				values (?,?,?,?,?,?,?,?,?,?,?,?,?)""");
 				BatchAux aux = new BatchAux(stmt);) {
 			leBase(diretorio, this::linhaNaoPrevidenciaria)
 					.forEach(aux::appendLinhaNaoPrevidenciaria);
-			Logger.info("Linhas inseridas {}", Common.formatDuration(System.nanoTime()-t0));
+			Logger.info("Linhas inseridas em {}", Common.formatDuration(System.nanoTime()-t0));
 		} finally {
 			conn.commit();
 		}
 	}
 
-	private void indiceTabelaNaoPrevidenciaria(Connection conn) throws SQLException {
+	private void criaIndicesTabelaGeral(SQLiteConnection conn) throws SQLException {
 		long t0 = System.nanoTime();
-		Logger.info("Criando índice...");
-		Common.executeUpdateStatement(conn, "CREATE INDEX `index_nao_previdenciario` ON `pgfn_nao_previdenciario` (`cpf_cnpj`)");
-		Logger.info("Índice criado {}", Common.formatDuration(System.nanoTime()-t0));
+		Logger.info("Criando índices...");
+		Common.executeUpdateStatement(conn, "CREATE INDEX `idx_pgfn_devedores_cpf_cnpj` ON `pgfn_devedores` (`cpf_cnpj`)");
+		Common.executeUpdateStatement(conn, "CREATE INDEX `idx_pgfn_devedores_cnpj` ON `pgfn_devedores` (substr(`cpf_cnpj`,1,8))");
+		Logger.info("Índices criado em {}", Common.formatDuration(System.nanoTime()-t0));
 	}
 
 	private <T> Stream<T> leBase(Path diretorio, Function<String,T> mapeamento) {
