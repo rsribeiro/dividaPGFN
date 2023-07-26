@@ -6,7 +6,7 @@
 
 	<groupId>com.ric</groupId>
 	<artifactId>dividapgfn</artifactId>
-	<version>3.0.0</version>
+	<version>3.1.0</version>
 	<packaging>jar</packaging>
 
 	<name>dividapgfn</name>
@@ -15,7 +15,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven-minimum-version>3.2.5</maven-minimum-version>
-		<maven.compiler.release>19</maven.compiler.release>
+		<maven.compiler.release>20</maven.compiler.release>
 		<maven-assembly-plugin.version>3.5.0</maven-assembly-plugin.version>
 		<maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
 		<maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
@@ -25,9 +25,9 @@
 		<maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
 		<maven-surefire-plugin.version>3.0.0</maven-surefire-plugin.version>
 		<maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
-		<sqlite.version>3.41.2.1</sqlite.version>
-		<picocli.version>4.7.3</picocli.version>
-		<tinylog.version>2.6.1</tinylog.version>
+		<sqlite.version>3.42.0.0</sqlite.version>
+		<picocli.version>4.7.4</picocli.version>
+		<tinylog.version>2.6.2</tinylog.version>
 	</properties>
 
 	<dependencies>
