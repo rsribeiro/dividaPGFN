@@ -117,8 +117,9 @@ public final class BasePGFN implements Callable<Integer> {
 					receita_principal,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado)
-				values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""");
+					valor_consolidado,
+					arquivo_origem)
+				values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'FGTS')""");
 				BatchAux aux = new BatchAux(stmt);) {
 			leBase(diretorio, this::linhaFGTS).forEach(aux::appendLinhaFGTS);
 			Logger.info("Linhas inseridas em {}", Common.formatDuration(System.nanoTime()-t0));
@@ -144,8 +145,9 @@ public final class BasePGFN implements Callable<Integer> {
 					receita_principal,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado)
-				values (?,?,?,?,?,?,?,?,?,?,?,?,?)""");
+					valor_consolidado,
+					arquivo_origem)
+				values (?,?,?,?,?,?,?,?,?,?,?,?,?,'PREVIDENCIARIO')""");
 				BatchAux aux = new BatchAux(stmt);) {
 			leBase(diretorio, this::linhaPrevidenciaria)
 					.forEach(aux::appendLinhaPrevidenciaria);
@@ -172,8 +174,9 @@ public final class BasePGFN implements Callable<Integer> {
 					tipo_credito,
 					data_inscricao,
 					indicador_ajuizado,
-					valor_consolidado)
-				values (?,?,?,?,?,?,?,?,?,?,?,?,?)""");
+					valor_consolidado,
+					arquivo_origem)
+				values (?,?,?,?,?,?,?,?,?,?,?,?,?,'GERAL')""");
 				BatchAux aux = new BatchAux(stmt);) {
 			leBase(diretorio, this::linhaNaoPrevidenciaria)
 					.forEach(aux::appendLinhaNaoPrevidenciaria);
