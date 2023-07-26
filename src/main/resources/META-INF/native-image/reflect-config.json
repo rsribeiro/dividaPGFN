@@ -29,6 +29,10 @@
   "methods":[{"name":"current","parameterTypes":[] }]
 },
 {
+  "name":"java.lang.Thread",
+  "fields":[{"name":"threadLocalRandomProbe"}]
+},
+{
   "name":"java.nio.file.Path"
 },
 {
@@ -46,10 +50,11 @@
 },
 {
   "name":"java.sql.DriverManager",
-  "methods":[
-    {"name":"getConnection","parameterTypes":["java.lang.String"] }, 
-    {"name":"getDriver","parameterTypes":["java.lang.String"] }
-  ]
+  "methods":[{"name":"getConnection","parameterTypes":["java.lang.String"] }, {"name":"getDriver","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.sql.SQLException",
+  "fields":[{"name":"next"}]
 },
 {
   "name":"java.sql.Time",
@@ -114,6 +119,14 @@
 {
   "name":"java.time.ZonedDateTime",
   "methods":[{"name":"parse","parameterTypes":["java.lang.CharSequence"] }]
+},
+{
+  "name":"java.util.concurrent.atomic.AtomicBoolean",
+  "fields":[{"name":"value"}]
+},
+{
+  "name":"java.util.concurrent.atomic.Striped64",
+  "fields":[{"name":"base"}, {"name":"cellsBusy"}]
 },
 {
   "name":"org.sqlite.JDBC"

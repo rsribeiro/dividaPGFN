@@ -20,27 +20,16 @@
 },
 {
   "name":"org.sqlite.Function",
-  "fields":[
-    {"name":"args"}, 
-    {"name":"context"}, 
-    {"name":"value"}
-  ],
+  "fields":[{"name":"args"}, {"name":"context"}, {"name":"value"}],
   "methods":[{"name":"xFunc","parameterTypes":[] }]
 },
 {
   "name":"org.sqlite.Function$Aggregate",
-  "methods":[
-    {"name":"clone","parameterTypes":[] }, 
-    {"name":"xFinal","parameterTypes":[] }, 
-    {"name":"xStep","parameterTypes":[] }
-  ]
+  "methods":[{"name":"clone","parameterTypes":[] }, {"name":"xFinal","parameterTypes":[] }, {"name":"xStep","parameterTypes":[] }]
 },
 {
   "name":"org.sqlite.Function$Window",
-  "methods":[
-    {"name":"xInverse","parameterTypes":[] }, 
-    {"name":"xValue","parameterTypes":[] }
-  ]
+  "methods":[{"name":"xInverse","parameterTypes":[] }, {"name":"xValue","parameterTypes":[] }]
 },
 {
   "name":"org.sqlite.ProgressHandler",
@@ -48,12 +37,7 @@
 },
 {
   "name":"org.sqlite.core.DB",
-  "methods":[
-    {"name":"onCommit","parameterTypes":["boolean"] }, 
-    {"name":"onUpdate","parameterTypes":["int","java.lang.String","java.lang.String","long"] }, 
-    {"name":"throwex","parameterTypes":[] }, 
-    {"name":"throwex","parameterTypes":["int"] }
-  ]
+  "methods":[{"name":"onCommit","parameterTypes":["boolean"] }, {"name":"onUpdate","parameterTypes":["int","java.lang.String","java.lang.String","long"] }, {"name":"throwex","parameterTypes":[] }, {"name":"throwex","parameterTypes":["int"] }]
 },
 {
   "name":"org.sqlite.core.DB$ProgressObserver",
@@ -61,29 +45,11 @@
 },
 {
   "name":"org.sqlite.core.NativeDB",
-  "fields":[
-    {"name":"busyHandler"}, 
-    {"name":"commitListener"}, 
-    {"name":"pointer"}, 
-    {"name":"progressHandler"}, 
-    {"name":"updateListener"}
-  ],
-  "methods":[
-    {"name":"stringToUtf8ByteArray","parameterTypes":["java.lang.String"] }, 
-    {"name":"throwex","parameterTypes":["java.lang.String"] }
-  ]
+  "fields":[{"name":"busyHandler"}, {"name":"commitListener"}, {"name":"pointer"}, {"name":"progressHandler"}, {"name":"updateListener"}],
+  "methods":[{"name":"stringToUtf8ByteArray","parameterTypes":["java.lang.String"] }, {"name":"throwex","parameterTypes":["java.lang.String"] }]
 },
 {
   "name":"sun.management.VMManagementImpl",
-  "fields":[
-    {"name":"compTimeMonitoringSupport"}, 
-    {"name":"currentThreadCpuTimeSupport"}, 
-    {"name":"objectMonitorUsageSupport"}, 
-    {"name":"otherThreadCpuTimeSupport"}, 
-    {"name":"remoteDiagnosticCommandsSupport"}, 
-    {"name":"synchronizerUsageSupport"}, 
-    {"name":"threadAllocatedMemorySupport"}, 
-    {"name":"threadContentionMonitoringSupport"}
-  ]
+  "fields":[{"name":"compTimeMonitoringSupport"}, {"name":"currentThreadCpuTimeSupport"}, {"name":"objectMonitorUsageSupport"}, {"name":"otherThreadCpuTimeSupport"}, {"name":"remoteDiagnosticCommandsSupport"}, {"name":"synchronizerUsageSupport"}, {"name":"threadAllocatedMemorySupport"}, {"name":"threadContentionMonitoringSupport"}]
 }
 ]
